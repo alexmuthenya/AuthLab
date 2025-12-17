@@ -3,32 +3,37 @@ package com.alex.AuthLab.service;
 
 import com.alex.AuthLab.model.User;
 import com.alex.AuthLab.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
-
 @Service
 public class UserService {
-    UserRepository userRepository;
-    BCryptPasswordEncoder bcryptPasswordEncoder;
+    private final UserRepository userRepository;
+    private final BCryptPasswordEncoder bcryptPasswordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder bcryptPasswordEncoder) {
         this.userRepository = userRepository;
-        this.bcryptPasswordEncoder = new BCryptPasswordEncoder();
+        this.bcryptPasswordEncoder = bcryptPasswordEncoder;
     }
 
-    public User registerUser(String username, String email, String password) {
-        if (userRepository.findByUsername(username).isPresent()) {
-            throw new RuntimeException("Username already in use, please choose another one");
+    public ResponseEntity<String> registerUser(String email, String password) {
+        if(userRepository.findByEmail(email).isPresent()){
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body("User Already Exists");
         }
-        if (userRepository.existsByEmail(email)) {
-            throw new RuntimeException("Email already in use!");
 
-        }
         String hashedPassword = bcryptPasswordEncoder.encode(password);
-        User user = new User(null, email, hashedPassword, username);
-        return userRepository.save(user);
+        User newUser = new User(null, email, hashedPassword);
+        userRepository.save(newUser);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("User Created Successfully");
 
     }
+
+
 }
