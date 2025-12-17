@@ -1,6 +1,7 @@
 package com.alex.AuthLab.service;
 
 
+import com.alex.AuthLab.dto.ApiResponse;
 import com.alex.AuthLab.model.User;
 import com.alex.AuthLab.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -18,20 +19,20 @@ public class UserService {
         this.bcryptPasswordEncoder = bcryptPasswordEncoder;
     }
 
-    public ResponseEntity<String> registerUser(String email, String password) {
-        if(userRepository.findByEmail(email).isPresent()){
+    public ResponseEntity<ApiResponse> registerUser(User user) {
+        if(userRepository.findByEmail(user.getEmail()).isPresent()){
             return ResponseEntity
                     .status(HttpStatus.CONFLICT)
-                    .body("User Already Exists");
+                    .body( new ApiResponse("User Already Exists", false));
         }
 
-        String hashedPassword = bcryptPasswordEncoder.encode(password);
-        User newUser = new User(null, email, hashedPassword);
+        String hashedPassword = bcryptPasswordEncoder.encode(user.getPassword());
+        User newUser = new User(null, user.getEmail(), hashedPassword);
         userRepository.save(newUser);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body("User Created Successfully");
+                .body(new ApiResponse("User registered successfully", true));
 
     }
 
